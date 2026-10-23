@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1b2a49">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+<title>QR Audio</title>
+</head>
+<body>
+<header><button id="atras" hidden aria-label="Volver">←</button><span>🎧 QR Audio</span></header>
+<main>
+  <!-- Pantalla principal -->
+  <section class="pantalla" id="inicio">
+    <button class="grande principal" id="b-abrir">🎧 Abrir audio<small>Elegí un audio del celular para escucharlo</small></button>
+    <button class="grande" id="b-nuevo">➕ Nuevo llavero<small>Audio → guardar en Drive → generar QR</small></button>
+    <button class="grande" id="b-mis">📂 Mis audios<small>Próximamente</small></button>
+    <button class="grande" id="b-hoja">🖨️ Hoja de impresión<small>Próximamente</small></button>
+    <div class="tarjeta dato">💡 <b>Desde WhatsApp:</b> mantené presionado el audio → <b>Compartir</b> → elegí <b>QR Audio</b>.<br>
+    Con "Abrir audio": en el selector elegí <b>Audio</b> o <b>Recientes</b> para ver primero los de WhatsApp.</div>
+    <input type="file" id="archivo" accept="audio/*,.opus,.ogg,.m4a,.mp3,.aac,.wav" hidden>
+  </section>
+
+  <!-- Escuchar y guardar -->
+  <section class="pantalla" id="audio" hidden>
+    <div class="tarjeta">
+      <b id="a-nombre"></b>
+      <div class="dato" id="a-datos"></div>
+      <audio id="reproductor" controls preload="metadata"></audio>
+    </div>
+    <div class="tarjeta">
+      <label for="etiqueta">Nombre del cliente o etiqueta</label>
+      <input type="text" id="etiqueta" placeholder="Ej: Marta Gomez" autocomplete="off">
+      <button class="btn" id="b-guardar" style="margin-top:12px">☁️ Guardar en Drive y generar QR</button>
+      <div class="dato" id="estado" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- QR listo -->
+  <section class="pantalla" id="qr" hidden>
+    <div class="tarjeta">
+      <div class="ok">✅ Guardado en Drive</div>
+      <div class="dato" id="q-nombre"></div>
+      <canvas id="lienzo"></canvas>
+      <div class="fila">
+        <button class="btn" id="d-png">PNG</button>
+        <button class="btn sec" id="d-jpg">JPG</button>
+        <button class="btn sec" id="d-svg">SVG</button>
+      </div>
+      <div class="dato">PNG es el más nítido; JPG funciona si lo necesitás, pero comprime y puede dejar bordes borrosos en QR muy chicos.</div>
+      <button class="btn sec" id="b-compartir">📤 Compartir</button>
+      <button class="btn sec" id="b-copiar">🔗 Copiar link</button>
+      <button class="btn sec" id="b-probar">▶️ Probar enlace</button>
+      <div class="aviso">Escaneá el QR con <b>otro celular</b> y verificá que reproduce el audio <b>ANTES</b> de usarlo en la resina.</div>
+      <div class="aviso" id="q-registro" hidden></div>
+    </div>
+    <button class="grande principal" id="b-otro">➕ Hacer otro llavero</button>
+  </section>
+</main>
+<div id="toast"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="js/config.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/drive.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
