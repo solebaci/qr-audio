@@ -97,5 +97,20 @@ const Drive = (() => {
     return { fileId: sub.id, link, nombre, numero: n, registroOk };
   }
 
-  return { guardar };
+  async function listar() {
+    const carp = await carpeta(); let out = [], pag = '';
+    do {
+      const r = await json(API + '/files?pageSize=200&orderBy=' + q('createdTime desc') + '&fields=nextPageToken,files(id,name)&q=' +
+        q("'" + carp + "' in parents and trashed=false and mimeType contains 'audio/'") + pag);
+      r.files.forEach((f) => {
+        const m = /^(\d{4}-\d{2}-\d{2})_(.*)_(\d{3})\.[a-z0-9]+$/i.exec(f.name);
+        out.push({ id: f.id, name: f.name, fecha: m ? m[1] : '', etiqueta: m ? m[2].replace(/-/g, ' ') : f.name, numero: m ? m[3] : '',
+          link: 'https://drive.google.com/file/d/' + f.id + '/view' });
+      });
+      pag = r.nextPageToken ? '&pageToken=' + r.nextPageToken : '';
+    } while (pag);
+    return out;
+  }
+
+  return { guardar, listar };
 })();

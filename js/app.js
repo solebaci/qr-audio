@@ -53,7 +53,7 @@ async function guardar() {
   if (!etiqueta) { aviso('Escribí el nombre del cliente o una etiqueta.', true); return $('#etiqueta').focus(); }
   const b = $('#b-guardar'); b.disabled = true; $('#estado').textContent = '⏳ Guardando en Drive… no cierres la app.';
   try {
-    resultado = await Drive.guardar(archivo, etiqueta);
+    resultado = await Drive.guardar(archivo, etiqueta); resultado.etiqueta = etiqueta;
     qr = QR.crearQR(resultado.link, CONFIG.NIVEL_QR);
     QR.dibujar($('#lienzo'), qr, 1200, 4);
     $('#q-nombre').textContent = resultado.nombre;
@@ -88,6 +88,95 @@ $('#b-compartir').onclick = async () => {
     else await navigator.share({ title: 'QR ' + resultado.nombre, text: resultado.link });
   } catch (e) { if (e.name !== 'AbortError') aviso('Este celular no permite compartir desde acá. Usá Descargar.', true); }
 };
+
+// ---- Hoja de impresión y Mis audios ----
+const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const tamDe = (n) => +document.querySelector('input[name=' + n + ']:checked').value;
+const actualizarInicio = () => ($('#b-hoja small').textContent = Hoja.contador());
+function agregarAHoja(items, tam) {
+  const r = Hoja.agregar(items, tam); actualizarInicio();
+  if (r) aviso(r.agregados ? 'Agregado a la hoja ✅ ' + Hoja.contador() : 'Ese QR ya estaba en la hoja.');
+}
+$('#b-hoja-add').onclick = () => agregarAHoja([{ fileId: resultado.fileId, link: resultado.link,
+  texto: resultado.etiqueta + ' · ' + String(resultado.numero).padStart(3, '0') }], tamDe('tam'));
+
+let pagina = 0;
+function pintarHoja() {
+  const e = Hoja.estado(); pagina = Math.max(0, Math.min(pagina, e.paginas - 1));
+  $('#h-cont').textContent = Hoja.contador(); $('#h-tam').value = e.tam;
+  $('#h-pag').textContent = 'Página ' + (pagina + 1) + ' de ' + e.paginas;
+  const cv = Hoja.canvas(pagina, 70, $('#h-guias').checked), v = $('#h-canvas');
+  v.width = cv.width; v.height = cv.height; v.getContext('2d').drawImage(cv, 0, 0);
+  $('#h-items').innerHTML = e.items.map((it, i) => '<div class="item"><span>' + (i + 1) + '</span><input type="text" data-t="' + i + '" value="' + esc(it.texto) +
+    '"><button data-up="' + i + '">▲</button><button data-dn="' + i + '">▼</button><button data-x="' + i + '">✕</button></div>').join('') ||
+    '<div class="dato">La hoja está vacía. Agregá QR desde "Nuevo llavero" o "Mis audios".</div>';
+  actualizarInicio();
+}
+$('#b-hoja').onclick = () => { pintarHoja(); ir('hoja'); };
+$('#h-guias').onchange = pintarHoja;
+$('#h-prev').onclick = () => { pagina--; pintarHoja(); };
+$('#h-next').onclick = () => { pagina++; pintarHoja(); };
+$('#h-tam').onchange = (e) => {
+  if (Hoja.estado().items.length && !confirm('¿Cambiar el tamaño de TODA la hoja?')) return pintarHoja();
+  Hoja.setTam(+e.target.value); pintarHoja();
+};
+$('#h-items').onclick = (e) => {
+  const d = e.target.dataset; if (!d) return;
+  if (d.x !== undefined) Hoja.quitar(+d.x); else if (d.up !== undefined) Hoja.mover(+d.up, -1); else if (d.dn !== undefined) Hoja.mover(+d.dn, 1); else return;
+  pintarHoja();
+};
+$('#h-items').onchange = (e) => { if (e.target.dataset.t !== undefined) { Hoja.setTexto(+e.target.dataset.t, e.target.value); pintarHoja(); } };
+$('#h-vaciar').onclick = () => { if (confirm('¿Vaciar toda la hoja? Los audios en Drive no se tocan.')) { Hoja.vaciar(); pagina = 0; pintarHoja(); } };
+const hojaVacia = () => (Hoja.estado().items.length ? false : (aviso('La hoja está vacía.', true), true));
+const nombreHoja = () => 'hoja-qr-' + Hoja.estado().tam + 'x' + Hoja.estado().tam;
+$('#h-pdf').onclick = async () => { if (hojaVacia()) return; try { bajar(await Hoja.pdf(), nombreHoja() + '.pdf'); } catch (e) { aviso('No se pudo armar el PDF: ' + e.message, true); } };
+async function bajarImagenes(tipo) {
+  if (hojaVacia()) return;
+  for (let p = 0; p < Hoja.estado().paginas; p++) {
+    const blob = await new Promise((ok) => Hoja.canvas(p, 300, $('#h-guias').checked).toBlob(ok, tipo, 1));
+    bajar(blob, nombreHoja() + '-p' + (p + 1) + (tipo === 'image/png' ? '.png' : '.jpg'));
+  }
+}
+$('#h-png').onclick = () => bajarImagenes('image/png');
+$('#h-jpg').onclick = () => bajarImagenes('image/jpeg');
+$('#h-share').onclick = async () => {
+  if (hojaVacia()) return;
+  try { const f = new File([await Hoja.pdf()], nombreHoja() + '.pdf', { type: 'application/pdf' }); await navigator.share({ files: [f], title: 'Hoja de QR' }); }
+  catch (e) { if (e.name !== 'AbortError') aviso('Este celular no permite compartir desde acá. Usá Descargar PDF.', true); }
+};
+
+let audios = [], elegidos = new Set();
+function pintarLista() {
+  const t = $('#buscar').value.trim().toLowerCase();
+  const html = audios.map((a, i) => ({ a, i })).filter(({ a }) => (a.etiqueta + ' ' + a.fecha + ' ' + a.numero).toLowerCase().includes(t))
+    .map(({ a, i }) => '<div class="item"><input type="checkbox" data-s="' + i + '"' + (elegidos.has(i) ? ' checked' : '') + '><span class="nom">' + esc(a.etiqueta) +
+      '<small>' + a.fecha + ' · ' + a.numero + '</small></span><button data-qr="' + i + '">QR</button><button data-pl="' + i + '">▶</button></div>').join('');
+  $('#lista').innerHTML = html || '<div class="dato">No hay audios para mostrar.</div>';
+  $('#m-n').textContent = elegidos.size + ' seleccionados';
+}
+async function abrirMis() {
+  ir('mis'); $('#lista').innerHTML = '<div class="dato">⏳ Cargando desde Drive…</div>';
+  try { audios = await Drive.listar(); elegidos.clear(); pintarLista(); }
+  catch (e) { $('#lista').innerHTML = ''; aviso(e.message, true); }
+}
+$('#b-mis').onclick = abrirMis;
+$('#buscar').oninput = pintarLista;
+$('#lista').onclick = (e) => {
+  const d = e.target.dataset, a = audios[+(d.qr || d.pl)];
+  if (d.s !== undefined) { elegidos.has(+d.s) ? elegidos.delete(+d.s) : elegidos.add(+d.s); $('#m-n').textContent = elegidos.size + ' seleccionados'; }
+  else if (d.pl !== undefined) window.open(a.link, '_blank');
+  else if (d.qr !== undefined) {
+    resultado = { fileId: a.id, link: a.link, nombre: a.name, numero: a.numero, etiqueta: a.etiqueta, registroOk: true };
+    qr = QR.crearQR(a.link, CONFIG.NIVEL_QR); QR.dibujar($('#lienzo'), qr, 1200, 4);
+    $('#q-nombre').textContent = a.name; $('#q-registro').hidden = true; ir('qr');
+  }
+};
+$('#m-add').onclick = () => {
+  if (!elegidos.size) return aviso('Tildá al menos un audio.', true);
+  agregarAHoja([...elegidos].sort((x, y) => y - x).map((i) => audios[i]).map((a) => ({ fileId: a.id, link: a.link, texto: a.etiqueta + ' · ' + a.numero })), tamDe('tam2'));
+  elegidos.clear(); pintarLista();
+};
+actualizarInicio();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 recibirCompartido();

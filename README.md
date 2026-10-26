@@ -6,8 +6,10 @@ Hacé los pasos 1 y 2 **desde una computadora**; el celular es solo para el paso
 ## Estado actual
 Hecho: instalación en Android, abrir/escuchar audio, compartir desde WhatsApp, guardar en Drive (carpeta
 "Audios Llaveros QR", permiso "cualquiera con el enlace", nombre `AAAA-MM-DD_Cliente_NNN.ext`),
-registro `registro_llaveros.csv` automático, QR en PNG/JPG/SVG (≥1200 px), compartir, copiar y probar link.
-Falta (próximas etapas): Hoja de impresión, Mis audios, Verificar enlaces, respaldo ZIP.
+registro `registro_llaveros.csv` automático, QR en PNG/JPG/SVG (≥1200 px), compartir, copiar y probar link,
+**Mis audios** (buscar, escuchar, regenerar QR), **Hoja de impresión A4** (3×3 cm = 30 por hoja, 4×4 cm = 20 por hoja,
+varias páginas, texto editable bajo cada QR, regla de 10 cm, PDF vectorial / JPG / PNG a 300 DPI).
+Falta (próxima etapa): Verificar enlaces y respaldo ZIP.
 
 ## Paso 0 — Prueba de audio (antes de todo)
 1. Subí a mano un audio de WhatsApp (.opus) a tu Drive y compartilo con "Cualquier persona con el enlace".

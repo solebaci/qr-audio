@@ -1,7 +1,7 @@
 // Service Worker: guarda la app para uso sin conexión y recibe audios compartidos desde WhatsApp.
-const VERSION = 'qr-audio-v1';
+const VERSION = 'qr-audio-v2';
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'css/styles.css', 'js/config.js', 'js/qr.js',
-  'js/drive.js', 'js/app.js', 'icons/icon-192.png', 'icons/icon-512.png'];
+  'js/drive.js', 'js/print.js', 'js/pdf-lib.min.js', 'js/app.js', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));

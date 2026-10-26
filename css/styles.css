@@ -19,3 +19,8 @@ canvas{width:100%;max-width:360px;display:block;margin:0 auto;border:1px solid #
 .ok{color:var(--ok);font-weight:700;font-size:20px}.dato{color:#555;font-size:15px}
 #toast{position:fixed;left:12px;right:12px;bottom:16px;padding:14px;border-radius:10px;background:#333;color:#fff;z-index:9;display:none}
 #toast.error{background:var(--mal)}
+
+.item{display:flex;gap:6px;align-items:center;margin:6px 0}.item>span:first-child{color:#777;min-width:22px;font-size:14px}
+.item input[type=text]{flex:1;padding:8px;font-size:15px;border-width:1px}.item input[type=checkbox]{width:24px;height:24px}
+.item button{padding:8px 11px;border:0;border-radius:8px;background:#e5e9f4;font-size:15px}.item .nom{flex:1}.item small{display:block;color:#666}
+#h-canvas{max-width:420px;image-rendering:auto}select{width:100%}label input[type=radio]{margin-right:6px}details{margin-top:6px}
